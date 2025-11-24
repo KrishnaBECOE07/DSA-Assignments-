@@ -1,30 +1,44 @@
 #include <iostream>
-#include <climits>
 using namespace std;
+struct Node {
+    int key;
+    Node* left;
+    Node* right;
+    Node(int k) : key(k), left(nullptr), right(nullptr) {}
+};
 
-struct Node { int data; Node* left; Node* right; Node(int v): data(v), left(nullptr), right(nullptr) {} };
-
-bool is_bst_util(Node* r, long long low, long long high) {
-    if (!r) return true;
-    if (r->data <= low || r->data >= high) return false;
-    return is_bst_util(r->left, low, r->data) && is_bst_util(r->right, r->data, high);
+Node* insert(Node* root, int key) {
+    if (!root) return new Node(key);
+    if (key < root->key) root->left = insert(root->left, key);
+    else if (key > root->key) root->right = insert(root->right, key);
+    return root;
 }
-bool is_bst(Node* root) { return is_bst_util(root, LLONG_MIN, LLONG_MAX); }
-
+bool isBSTUtil(Node* root, Node*& prev) {
+    if (!root) return true;
+    if (!isBSTUtil(root->left, prev)) return false;
+    if (prev != nullptr && root->key <= prev->key)
+        return false;
+    prev = root;
+    return isBSTUtil(root->right, prev);
+}
+bool isBST(Node* root) {
+    Node* prev = nullptr;
+    return isBSTUtil(root, prev);
+}
 int main() {
-    // make a tree that is not a BST:
-    Node* root = new Node(10);
-    root->left = new Node(5);
-    root->right = new Node(20);
-    root->left->right = new Node(12); // violates BST property
+    Node* root = nullptr;
+    root = insert(root, 50);
+    insert(root, 30);
+    insert(root, 70);
+    insert(root, 20);
+    insert(root, 40);
+    insert(root, 60);
+    insert(root, 80);
 
-    cout << "Is tree BST? " << (is_bst(root) ? "Yes" : "No") << "\n";
+    if (isBST(root))
+        cout << "The tree is a BST.\n";
+    else
+        cout << "The tree is NOT a BST.\n";
 
-    // Now a correct BST:
-    Node* b = new Node(10);
-    b->left = new Node(5);
-    b->right = new Node(15);
-    b->left->right = new Node(7);
-    cout << "Is second tree BST? " << (is_bst(b) ? "Yes" : "No") << "\n";
     return 0;
 }
