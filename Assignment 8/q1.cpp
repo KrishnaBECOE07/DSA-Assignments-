@@ -28,12 +28,6 @@ void postorder(Node* r) {
 }
 
 int main() {
-    // small sample tree:
-    //      8
-    //     / \
-    //    3  10
-    //   / \   \
-    //  1  6   14
     Node* root = new Node(8);
     root->left = new Node(3);
     root->right = new Node(10);
