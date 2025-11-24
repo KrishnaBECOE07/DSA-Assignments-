@@ -1,96 +1,113 @@
 #include <iostream>
-#include <climits>
 using namespace std;
-
 struct Node {
-    int data; Node* left; Node* right;
-    Node(int v): data(v), left(nullptr), right(nullptr) {}
-}
-
-;
-
-Node* bst_insert(Node* root, int key) {
+    int key;
+    Node* left;
+    Node* right;
+    Node(int k) : key(k), left(nullptr), right(nullptr) {}
+};
+Node* insert(Node* root, int key) {
     if (!root) return new Node(key);
-    if (key < root->data) root->left = bst_insert(root->left, key);
-    else if (key > root->data) root->right = bst_insert(root->right, key);
-    // duplicates ignored
+    if (key < root->key) root->left = insert(root->left, key);
+    else if (key > root->key) root->right = insert(root->right, key);
+    // if equal, ignore (no duplicates)
     return root;
 }
-
-// recursive search
-Node* search_rec(Node* root, int key) {
+Node* searchRecursive(Node* root, int key) {
     if (!root) return nullptr;
-    if (root->data == key) return root;
-    return key < root->data ? search_rec(root->left, key) : search_rec(root->right, key);
+    if (root->key == key) return root;
+    if (key < root->key) return searchRecursive(root->left, key);
+    return searchRecursive(root->right, key);
 }
-// iterative search
-Node* search_iter(Node* root, int key) {
-    while (root) {
-        if (root->data == key) return root;
-        root = (key < root->data) ? root->left : root->right;
+Node* searchIterative(Node* root, int key) {
+    Node* cur = root;
+    while (cur) {
+        if (cur->key == key) return cur;
+        if (key < cur->key) cur = cur->left;
+        else cur = cur->right;
     }
     return nullptr;
 }
-
-int bst_min(Node* root) {
-    if (!root) return INT_MIN;
-    while (root->left) root = root->left;
-    return root->data;
+Node* findMin(Node* root) {
+    if (!root) return nullptr;
+    Node* cur = root;
+    while (cur->left) cur = cur->left;
+    return cur;
 }
-int bst_max(Node* root) {
-    if (!root) return INT_MIN;
-    while (root->right) root = root->right;
-    return root->data;
+Node* findMax(Node* root) {
+    if (!root) return nullptr;
+    Node* cur = root;
+    while (cur->right) cur = cur->right;
+    return cur;
 }
+Node* inorderSuccessor(Node* root, int key) {
+    Node* target = searchIterative(root, key);
+    if (!target) return nullptr;
 
-Node* min_node(Node* r) { while (r && r->left) r = r->left; return r; }
+    // case 1: if right subtree exists -> successor is min of right subtree
+    if (target->right) return findMin(target->right);
 
-// inorder successor: if node has right child -> min(right)
-// else walk from root keeping candidate
-Node* inorder_successor(Node* root, int key) {
-    Node* t = search_iter(root, key);
-    if (!t) return nullptr;
-    if (t->right) return min_node(t->right);
+    // case 2: no right subtree -> successor is the lowest ancestor for which target is in left subtree
     Node* succ = nullptr;
     Node* cur = root;
     while (cur) {
-        if (key < cur->data) { succ = cur; cur = cur->left; }
-        else if (key > cur->data) cur = cur->right;
-        else break;
+        if (key < cur->key) {
+            succ = cur;
+            cur = cur->left;
+        } else if (key > cur->key) {
+            cur = cur->right;
+        } else break; // found node
     }
     return succ;
 }
-
-Node* inorder_predecessor(Node* root, int key) {
-    Node* t = search_iter(root, key);
-    if (!t) return nullptr;
-    if (t->left) {
-        Node* p = t->left; while (p->right) p = p->right; return p;
-    }
+Node* inorderPredecessor(Node* root, int key) {
+    Node* target = searchIterative(root, key);
+    if (!target) return nullptr;
+    if (target->left) return findMax(target->left);
     Node* pred = nullptr;
     Node* cur = root;
     while (cur) {
-        if (key > cur->data) { pred = cur; cur = cur->right; }
-        else if (key < cur->data) cur = cur->left;
-        else break;
+        if (key > cur->key) {
+            pred = cur;
+            cur = cur->right;
+        } else if (key < cur->key) {
+            cur = cur->left;
+        } else break; 
     }
     return pred;
+}
+void inorderPrint(Node* root) {
+    if (!root) return;
+    inorderPrint(root->left);
+    cout << root->key << " ";
+    inorderPrint(root->right);
 }
 
 int main() {
     Node* root = nullptr;
-    int vals[] = {20, 10, 5, 15, 30, 25, 35};
-    for (int i = 0; i < 7; ++i) root = bst_insert(root, vals[i]);
+    // build a sample BST
+    int vals[] = {50, 30, 70, 20, 40, 60, 80};
+    for (int v : vals) root = insert(root, v);
 
-    cout << "Min: " << bst_min(root) << "  Max: " << bst_max(root) << "\n";
+    cout << "In-order traversal: ";
+    inorderPrint(root);
+    cout << "\n";
+    int k = 40;
+    cout << "Search recursive for " << k << ": "
+         << (searchRecursive(root, k) ? "Found" : "Not found") << "\n";
+    cout << "Search iterative for " << 25 << ": "
+         << (searchIterative(root, 25) ? "Found" : "Not found") << "\n";
+    Node* mn = findMin(root);
+    Node* mx = findMax(root);
+    if (mn) cout << "Minimum element: " << mn->key << "\n";
+    if (mx) cout << "Maximum element: " << mx->key << "\n";
+    int q = 50;
+    Node* succ = inorderSuccessor(root, q);
+    Node* pred = inorderPredecessor(root, q);
+    if (succ) cout << "In-order successor of " << q << " is " << succ->key << "\n";
+    else cout << "In-order successor of " << q << " does not exist\n";
+    if (pred) cout << "In-order predecessor of " << q << " is " << pred->key << "\n";
+    else cout << "In-order predecessor of " << q << " does not exist\n";
 
-    int key = 15;
-    cout << "Search recursive " << (search_rec(root, key) ? "Found\n" : "Not found\n");
-    cout << "Search iterative " << (search_iter(root, 100) ? "Found\n" : "Not found\n");
-
-    Node* s = inorder_successor(root, 15);
-    Node* p = inorder_predecessor(root, 15);
-    cout << "Successor of 15: " << (s ? to_string(s->data) : string("None")) << "\n";
-    cout << "Predecessor of 15: " << (p ? to_string(p->data) : string("None")) << "\n";
     return 0;
 }
